@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Digital Green Evaluation Platform | NUST BRP 2026</title>
+<script>
+  var API  = 'https://script.google.com/macros/s/AKfycbwUNzKWicgYU8wwJ6jEkcnG0hONrQagU6CYMfaoj7arRZrC4aplC75O05cJ3dPbgYDf/exec';
+  var PWD  = 'DGEP@2026';
+  // Your Google Sheet — submissions are written here by Apps Script
+  // and the dashboard reads from here automatically
+  var SHEET_ID  = '11LKmCQfbPpPFGeFfveDyBin0UoVV4DZQpipkb-vsjvw';
+  var CSV_URL   = 'https://docs.google.com/spreadsheets/d/11LKmCQfbPpPFGeFfveDyBin0UoVV4DZQpipkb-vsjvw/gviz/tq?tqx=out:csv&sheet=DGEP+Submissions';
+</script>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#1A3A5C;--mblue:#2E86C1;--green:#1E8449;--teal:#148F77;
+  --orange:#D35400;--red:#E74C3C;--purple:#9B59B6;
+  --bg:#0F1923;--s1:#1A2332;--s2:#1E2D3E;--bd:#2A3F52;--bds:#3A5068;
+  --tx:#E8EDF2;--tx2:#8FA3B2;--tx3:#5C7A8A;
+  --font:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+}
+body{font-family:var(--font);background:var(--bg);color:var(--tx);min-height:100vh}
+.app{min-height:100vh;display:flex;flex-direction:column}
+.bar{background:var(--navy);padding:11px 20px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,0.07);flex-shrink:0}
+.brand{display:flex;align-items:center;gap:10px}
+.bico{width:30px;height:30px;background:rgba(255,255,255,0.1);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px}
+.btitle{font-size:14px;font-weight:500;color:#fff}
+.bsub{font-size:10px;color:rgba(255,255,255,0.5)}
+.nav{display:flex;gap:7px;align-items:center}
+.nb{background:rgba(255,255,255,0.1);border:none;color:rgba(255,255,255,0.9);padding:5px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-family:var(--font)}
+.nb:hover{background:rgba(255,255,255,0.2)}.nb.a{background:rgba(255,255,255,0.22)}
+.nb.grn{background:rgba(30,132,73,0.3);color:#6BCF8F}
+.nb.grn:hover{background:rgba(30,132,73,0.45)}
+.toast{position:fixed;top:14px;right:14px;background:#1E8449;color:#fff;padding:9px 16px;border-radius:8px;font-size:12px;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,0.5);animation:ti .2s ease}
+.toast.err{background:#C0392B}
+@keyframes ti{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+/* Password modal */
+.ov{position:fixed;inset:0;background:rgba(0,0,0,0.82);display:flex;align-items:center;justify-content:center;z-index:9999;backdrop-filter:blur(6px)}
+.modal{background:var(--s2);border:1px solid var(--bd);border-radius:16px;padding:32px;width:100%;max-width:370px;box-shadow:0 20px 60px rgba(0,0,0,0.6)}
+.m-ico{font-size:32px;margin-bottom:14px}
+.modal h3{font-size:16px;font-weight:500;margin-bottom:5px}
+.modal p{font-size:12px;color:var(--tx2);margin-bottom:18px;line-height:1.6}
+.m-err{font-size:11px;color:var(--red);margin-bottom:8px;font-weight:500}
+.m-row{display:flex;gap:8px;margin-top:8px}
+/* CSV sync modal */
+.csv-hint{font-size:10.5px;color:var(--tx3);margin-top:5px;line-height:1.5}
+/* Home */
+.home{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 20px;text-align:center;gap:20px}
+.hlogo{width:70px;height:70px;background:var(--s2);border:1px solid var(--bd);border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:30px}
+.home h2{font-size:21px;font-weight:500}
+.home p{font-size:13.5px;color:var(--tx2);max-width:460px;line-height:1.7}
+.hcards{display:grid;grid-template-columns:1fr 1fr;gap:13px;width:100%;max-width:480px}
+.hcard{background:var(--s2);border:1px solid var(--bd);border-radius:13px;padding:20px;cursor:pointer;text-align:left;transition:border-color .15s}
+.hcard:hover{border-color:var(--mblue)}
+.hcico{font-size:22px;margin-bottom:9px}
+.hcard h3{font-size:14px;font-weight:500;margin-bottom:4px}
+.hcard p{font-size:11.5px;color:var(--tx2)}
+/* Form */
+.fw{display:flex;flex:1;min-height:0}
+.sb{width:188px;background:var(--s1);border-right:1px solid var(--bd);padding:10px 0;flex-shrink:0;overflow-y:auto}
+.si{display:flex;align-items:center;gap:9px;padding:7px 13px;cursor:pointer;font-size:11.5px;color:var(--tx2);border-left:2px solid transparent}
+.si:hover{background:var(--s2);color:var(--tx)}.si.a{background:var(--s2);color:var(--tx);border-left-color:var(--mblue);font-weight:500}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--bd);flex-shrink:0}
+.dot.dn{background:var(--green)}.dot.cr{background:var(--mblue)}
+.fm{flex:1;overflow-y:auto;padding:22px}
+.sh{margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid var(--bd)}
+.sbadge{display:inline-flex;align-items:center;gap:5px;background:var(--s1);border:1px solid var(--bd);border-radius:5px;padding:3px 9px;font-size:10px;color:var(--tx2);margin-bottom:7px}
+.sh h2{font-size:16px;font-weight:500}
+.sh p{font-size:11.5px;color:var(--tx2);margin-top:3px}
+.qb{margin-bottom:13px;padding:12px;background:var(--s2);border:1px solid var(--bd);border-radius:9px}
+.qb.cul{border-left:3px solid var(--mblue)}
+.ql{font-size:13px;font-weight:500;margin-bottom:8px;line-height:1.4}
+.ctag{display:inline-block;background:rgba(46,134,193,0.15);color:var(--mblue);border-radius:4px;padding:1px 7px;font-size:9px;margin-bottom:5px;font-weight:500}
+.opts{display:flex;flex-direction:column;gap:5px}
+.opt{display:flex;align-items:center;gap:9px;padding:7px 11px;border:1px solid var(--bd);border-radius:7px;cursor:pointer;background:var(--s1);font-size:12.5px;transition:all .1s}
+.opt:hover{border-color:var(--bds)}.opt.s{border-color:var(--mblue);background:rgba(46,134,193,0.1);color:#fff}
+.rd{width:14px;height:14px;border:1.5px solid var(--bds);border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.ck{width:14px;height:14px;border:1.5px solid var(--bds);border-radius:4px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.opt.s .rd,.opt.s .ck{background:var(--mblue);border-color:var(--mblue)}
+.ri{width:6px;height:6px;border-radius:50%;background:#fff}.ci{color:#fff;font-size:9px}
+.inp{width:100%;padding:8px 11px;border:1px solid var(--bd);border-radius:7px;background:var(--s1);color:var(--tx);font-family:var(--font);font-size:12.5px}
+.inp:focus{outline:none;border-color:var(--mblue)}
+select.inp{cursor:pointer}select.inp option{background:var(--s1)}
+.ta{resize:vertical;min-height:75px}
+.ff{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-top:1px solid var(--bd);background:var(--s1);flex-shrink:0}
+.pb{flex:1;height:4px;background:var(--bd);border-radius:99px;margin:0 14px;overflow:hidden}
+.pf{height:100%;background:var(--mblue);border-radius:99px;transition:width .3s}
+.btn{padding:7px 16px;border-radius:7px;cursor:pointer;font-size:12.5px;font-family:var(--font);font-weight:500;border:none;transition:all .1s}
+.bp{background:var(--navy);color:#fff}.bp:hover{background:var(--mblue)}
+.bg{background:transparent;border:1px solid var(--bd);color:var(--tx)}.bg:hover{background:var(--s2)}
+.bgrn{background:var(--green);color:#fff}.bgrn:hover{background:var(--teal)}
+.btn:disabled{opacity:.4;cursor:default}
+.spin{display:inline-block;width:11px;height:11px;border:2px solid var(--bd);border-top-color:var(--mblue);border-radius:50%;animation:sp .7s linear infinite;margin-right:5px}
+@keyframes sp{to{transform:rotate(360deg)}}
+/* Results */
+.res{padding:22px;max-width:680px;margin:0 auto}
+.sco{background:var(--s2);border:1px solid var(--bd);border-radius:15px;padding:22px;display:flex;align-items:center;gap:22px;margin-bottom:16px}
+.bpill{display:inline-block;padding:4px 13px;border-radius:99px;font-size:12.5px;font-weight:500;margin-top:5px}
+.dgrid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:16px}
+.dcard{background:var(--s2);border:1px solid var(--bd);border-radius:9px;padding:11px}
+.dlbl{font-size:10px;color:var(--tx2);margin-bottom:4px;display:flex;align-items:center;gap:5px}
+.ddot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.dval{font-size:17px;font-weight:500;margin-bottom:4px}
+.dbg{height:4px;background:var(--bd);border-radius:99px;overflow:hidden}
+.dbf{height:100%;border-radius:99px;transition:width .5s}
+.sr{display:flex;align-items:center;gap:9px;margin-bottom:5px;font-size:11.5px}
+.sbg2{flex:1;height:4px;background:var(--bd);border-radius:99px;overflow:hidden}
+/* Dashboard */
+.dash{padding:18px}
+.srow{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:13px}
+.sc{background:var(--s2);border:1px solid var(--bd);border-radius:9px;padding:13px}
+.sl{font-size:10px;color:var(--tx2);margin-bottom:3px}.sv{font-size:21px;font-weight:500}
+.cs{background:var(--s2);border:1px solid var(--bd);border-radius:9px;padding:13px;margin-bottom:12px}
+.ct{font-size:13px;font-weight:500;margin-bottom:11px;display:flex;align-items:center;justify-content:space-between}
+.tbl{width:100%;border-collapse:collapse;font-size:11px}
+.tbl th{text-align:left;padding:6px 8px;border-bottom:1px solid var(--bd);color:var(--tx2);font-weight:500}
+.tbl td{padding:6px 8px;border-bottom:1px solid var(--bd)}
+.tbl tr:last-child td{border:none}.tbl tr:hover td{background:rgba(255,255,255,0.02)}
+.bdot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:4px}
+.empty{text-align:center;padding:48px;color:var(--tx2)}
+.empty p{font-size:15px;margin-bottom:5px}.empty span{font-size:12px}
+.bars{display:flex;align-items:flex-end;gap:4px;height:70px}
+.bw{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px}
+.bbar{width:100%;border-radius:3px 3px 0 0}
+.blbl{font-size:8px;color:var(--tx3);overflow:hidden;max-width:100%;text-align:center}
+.sync-note{font-size:10.5px;color:var(--tx3);margin-top:6px;font-style:italic}
+.smsg{font-size:11px;color:var(--green);margin-top:7px}
+</style>
+</head>
+<body>
+<div class="app" id="root"></div>
+<script>
+
+const {useState,useEffect}=React;
+const e=React.createElement;
+
+// ── CONFIG ──────────────────────────────────────────────────────────────────
+const CONFIGURED=!!(window.API);
+
+// ── CONSTANTS ────────────────────────────────────────────────────────────────
+const W={A:.1698,B:.0982,C:.2871,D:.0982,E:.0594,F:.2871};
+const DM={
+  A:{n:'Energy Management',c:'#2E86C1'},B:{n:'Water Management',c:'#5DADE2'},
+  C:{n:'Waste & Food Waste',c:'#1E8449'},D:{n:'Emissions & Carbon',c:'#D35400'},
+  E:{n:'Procurement',c:'#148F77'},F:{n:'Compliance',c:'#E74C3C'},
+  G:{n:'Chemical Use',c:'#9B59B6'},H:{n:'Customer Engagement',c:'#27AE60'},
+};
+const BANDS=[
+  {l:'Leading Green',m:76,c:'#1E8449',b:'rgba(30,132,73,0.2)'},
+  {l:'Established',  m:51,c:'#148F77',b:'rgba(20,143,119,0.2)'},
+  {l:'Developing',   m:26,c:'#D35400',b:'rgba(211,84,0,0.2)'},
+  {l:'Emerging',     m:0, c:'#E74C3C',b:'rgba(231,76,60,0.2)'},
+];
+const INTERP={
+  'Leading Green':'Best-in-class environmental management with measurable outcomes and formal governance across all primary dimensions.',
+  'Established':'Systematic management in place with documented practices. Targeted focus on weaker dimensions can achieve Leading Green status.',
+  'Developing':'Basic practices exist in some areas but systematic tracking and formal compliance remain largely absent. Multiple improvement opportunities identified.',
+  'Emerging':'Minimal environmental management. Immediate priorities: EPA compliance, waste segregation, and designating an environmental responsible officer.',
+};
+function getBand(s){return BANDS.find(b=>s>=b.m)||BANDS[3];}
+
+// ── QUESTIONS ────────────────────────────────────────────────────────────────
+const Q={
+A1:{d:'A',lbl:'Primary electricity source',t:'s',opts:[['WAPDA / Grid only',3],['Grid + Solar (hybrid)',9],['Grid + Solar + Generator backup',7],['Generator as primary source (4+ hrs/day)',1],["Don't know",2]]},
+A2:{d:'A',lbl:'Generator / UPS average daily runtime',t:'s',opts:[['0 hrs — no generator used',10],['Less than 2 hrs / day',8],['2-4 hrs / day',6],['4-8 hrs / day',3],['Over 8 hrs / day',1],["Don't know / not tracked",4]]},
+A3:{d:'A',lbl:'Energy efficiency measures in place',t:'m',opts:[['LED lighting throughout premises',6],['Inverter AC / energy-efficient refrigeration',7],['Solar panels installed',10],['Motion-sensor / timer lighting',6],['Energy audit in last 3 years',7],['None of the above',0]]},
+A4:{d:'A',lbl:'Monthly electricity bill level',t:'s',opts:[['Low - under PKR 30,000/month',10],['Moderate - PKR 30-80k/month',7],['High - PKR 80-200k/month',4],['Very High - over PKR 200k/month',1]]},
+A5:{d:'A',lbl:'Electricity records / bills accessible',t:'s',opts:[['Yes - complete records available',10],['Partial records only',5],['Bills paid by building landlord',3],['No records maintained',0]]},
+B1:{d:'B',lbl:'Water reuse or recycling practices',t:'s',opts:[['Yes - formally treated and reused',10],['Yes - partially reused',7],['Under consideration',3],['No reuse practices',0],["Don't know",2]]},
+B2:{d:'B',lbl:'Wastewater disposal method',t:'s',opts:[['On-site Effluent Treatment Plant (ETP)',10],['Municipal sewage line (formal)',8],['Combination - partially managed',5],['Open drain / unmanaged discharge',0],["Don't know / landlord manages",3]]},
+B3:{d:'B',lbl:'Grease trap or oil interceptor',t:'s',cul:1,opts:[['Yes - installed and regularly maintained',10],['Yes - installed, not maintained',5],['No grease trap installed',0],["Don't know what a grease trap is",1],['Not applicable (retail)',null]]},
+B4:{d:'B',lbl:'Water conservation measures',t:'m',opts:[['Low-flow taps / faucet aerators',7],['Water-efficient dishwasher cycle',7],['Staff trained on water conservation',6],['Water meter monitored regularly',6],['Rainwater harvesting',10],['None of the above',0]]},
+C1:{d:'C',lbl:'Daily solid waste volume',t:'s',opts:[['Low - 1-2 bags per week',10],['Moderate - several bags per week',7],['High - 1-2 large bins per day',4],['Very High - multiple large bins daily',1],['Not estimated / not tracked',3]]},
+C2:{d:'C',lbl:'Waste segregation at source',t:'s',opts:[['Yes - organic, plastic, paper, general separated',10],['Partial - some categories separated',5],['No segregation - all waste mixed',0]]},
+C3:{d:'C',lbl:'Unsold / leftover food management',t:'s',cul:1,opts:[['Composted on-site',10],['Donated to charity / community kitchen',10],['Sold at reduced price before closing',8],['Combination of above',8],['Discarded into general waste',0],['Not applicable (retail)',null]]},
+C4:{d:'C',lbl:'Food waste tracking',t:'s',cul:1,opts:[['Yes - formally measured and recorded',10],['Yes - rough informal estimate',6],['No tracking',0],['Not applicable (retail)',null]]},
+C5:{d:'C',lbl:'Solid waste disposal method',t:'s',opts:[['Composting facility',10],['Certified waste management vendor',9],['Municipal formal collection',7],['Combination formal + informal',4],['Informal roadside disposal',0]]},
+C6:{d:'C',lbl:'Recycling practice',t:'m',opts:[['Yes - cardboard / paper',7],['Yes - plastic',7],['Yes - glass',7],['Yes - metal / cans',7],['Vendor collects (type unconfirmed)',5],['No recycling practiced',0]]},
+C7:{d:'C',lbl:'Customer packaging provided',t:'m',opts:[['Reusable / cloth bags',10],['Biodegradable / paper bags',8],['Mix of plastic and paper',5],['Single-use plastic only',0],['No packaging provided',7]]},
+C8:{d:'C',lbl:'Single-use plastic reduction (last 2 years)',t:'s',opts:[['Fully eliminated',10],['Significantly reduced',8],['Minor reduction only',5],['Considering change',3],['No change made',0]]},
+D1:{d:'D',lbl:'Primary cooking fuel',t:'m',cul:1,opts:[['Electric only',10],['Natural gas (pipeline)',7],['Combination gas + electric',6],['LPG cylinders',4],['Biomass / wood fire',0],['Not applicable',null]]},
+D2:{d:'D',lbl:'Diesel generator monthly fuel consumption',t:'s',opts:[['No generator used',10],['Under 50 litres / month',8],['50-200 litres / month',6],['200-500 litres / month',3],['Over 500 litres / month',1],['Generator used but not tracked',4]]},
+D3:{d:'D',lbl:'Delivery / transport fleet',t:'m',opts:[['Partially electric or hybrid fleet',9],['No owned vehicles',7],['Third-party delivery only',6],['Petrol / diesel fleet (owned)',2],['Not applicable',null]]},
+E1:{d:'E',lbl:'Local / Pakistani sourcing percentage',t:'s',opts:[['Over 75% local',10],['50-75% local',7],['25-50% local',4],['Under 25% local',1],['Not tracked',3]]},
+E2:{d:'E',lbl:'Supplier environmental criteria',t:'s',opts:[['Yes - formal criteria in written contracts',10],['Yes - informal preference for greener suppliers',6],['Under consideration',3],['No criteria applied',0]]},
+E3:{d:'E',lbl:'Environmentally certified products stocked',t:'m',opts:[['Organic / naturally certified',9],['Eco-labelled or fair-trade',9],['Sustainably sourced seafood or meat',9],['Not aware of certifications',1],['No certified products stocked',0]]},
+F1:{d:'F',lbl:'EPA environmental license / NOC status',t:'s',opts:[['Yes - currently valid',10],['Applied - not yet received',5],['Previously held - expired',3],['No license held',0],['Not aware this is required',1]]},
+F2:{d:'F',lbl:'Designated environmental responsibility',t:'s',opts:[['Dedicated sustainability officer / team',10],['Operations manager responsible',7],['Owner personally handles it',5],['No designated responsibility',0]]},
+F3:{d:'F',lbl:'Staff environmental training',t:'m',opts:[['Regular formal training program',10],['Informal briefing at onboarding only',5],['Ad hoc reminders only',3],['No training or briefing provided',0]]},
+F4:{d:'F',lbl:'External environmental reporting',t:'m',opts:[['Formal ESG / environmental report published',10],['Internal reporting only',6],['Not required to report (SME/unlisted)',4],['No external reporting',0]]},
+G1:{d:'G',lbl:'Cleaning chemicals used',t:'m',opts:[['Eco-labelled / low-toxicity certified',10],['Mix of standard and eco-friendly',6],['Standard commercial chemicals',4],['Bleach / strong acids as primary',1],["Don't know",3]]},
+G2:{d:'G',lbl:'Chemical waste disposal',t:'m',opts:[['Returned to supplier',10],['Handled by contracted cleaner',8],['Via regular waste stream',4],['Poured into drain / sink',0],["Don't know",2]]},
+G3:{d:'G',lbl:'Ventilation adequacy',t:'m',opts:[['Mechanical ventilation / exhaust fans',10],['Natural ventilation only',6],['Inadequate / no ventilation',0],["Don't know",3]]},
+G4:{d:'G',lbl:'Pest control method',t:'s',opts:[['Licensed - eco-friendly methods',10],['Licensed - standard chemical methods',6],['Self-applied chemical sprays',3],['No formal pest control',1],['Not applicable',null]]},
+H1:{d:'H',lbl:'Green communication to customers',t:'m',opts:[['Prominently on menus / signage / website',10],['Through social media',8],['Informally upon request',5],['Under consideration',2],['No communication',0]]},
+H2:{d:'H',lbl:'Customer incentives for green choices',t:'m',opts:[['Discount for reusable bags / cups',9],['Discount for zero food waste at buffet',9],['Loyalty points for sustainable choices',8],['No incentives offered',0],['Not applicable',null]]},
+H3:{d:'H',lbl:'Staff can discuss environmental practices',t:'s',opts:[['Yes - staff briefed on sustainability',10],['Would need to escalate to manager',4],['No staff briefing on this topic',0]]},
+};
+const SECS=[
+  {id:'profile',lbl:'Firm Profile',ico:'🏢',qs:[]},
+  {id:'A',lbl:'Energy Management',ico:'⚡',qs:['A1','A2','A3','A4','A5']},
+  {id:'B',lbl:'Water Management',ico:'💧',qs:['B1','B2','B3','B4']},
+  {id:'C',lbl:'Waste & Food',ico:'♻️',qs:['C1','C2','C3','C4','C5','C6','C7','C8']},
+  {id:'D',lbl:'Emissions',ico:'🌿',qs:['D1','D2','D3']},
+  {id:'E',lbl:'Procurement',ico:'🛒',qs:['E1','E2','E3']},
+  {id:'F',lbl:'Compliance',ico:'✅',qs:['F1','F2','F3','F4']},
+  {id:'G',lbl:'Chemicals',ico:'🧪',qs:['G1','G2','G3','G4']},
+  {id:'H',lbl:'Customer',ico:'👥',qs:['H1','H2','H3']},
+];
+const PROFS=[
+  {k:'name',lbl:'Business name',t:'text',ph:'e.g. Al-Fatah Grocery Islamabad'},
+  {k:'type',lbl:'Business type',t:'sel',opts:['','Retail Chain','Independent Retail SME','Culinary Chain','Independent Restaurant / Cafe','Food Franchise','Mixed Retail & Culinary']},
+  {k:'locs',lbl:'Number of locations',t:'sel',opts:['','Single location (1)','Small multi (2-5)','Mid chain (6-20)','Large chain (20+)']},
+  {k:'reg',lbl:'Registration status',t:'sel',opts:['','SECP registered only','Chamber of Commerce only','Both SECP and Chamber','Neither / not registered','Uncertain']},
+  {k:'pol',lbl:'Formal environmental policy?',t:'sel',opts:['','Yes - written and accessible','Yes - informal / undocumented','No - not in place','Not aware if one exists']},
+];
+const LAST=SECS.length-1;
+
+// ── LOCAL STORAGE ────────────────────────────────────────────────────────────
+function saveLocal(rows){try{localStorage.setItem('dgep3',JSON.stringify(rows));}catch(e){}}
+function loadLocal(){try{const d=localStorage.getItem('dgep3');return d?JSON.parse(d):[];}catch(e){return[];}}
+function appendLocal(sub){
+  const rows=loadLocal(),ds=(sub.result&&sub.result.dimScores)||{};
+  rows.push({name:(sub.profile&&sub.profile.name)||'',type:(sub.profile&&sub.profile.type)||'',
+    locs:(sub.profile&&sub.profile.locs)||'',reg:(sub.profile&&sub.profile.reg)||'',
+    score:(sub.result&&sub.result.greenScore)||0,band:(sub.result&&sub.result.band&&sub.result.band.l)||'',
+    A:ds.A!=null?ds.A:'',B:ds.B!=null?ds.B:'',C:ds.C!=null?ds.C:'',
+    D:ds.D!=null?ds.D:'',E:ds.E!=null?ds.E:'',F:ds.F!=null?ds.F:'',
+    G:ds.G!=null?ds.G:'',H:ds.H!=null?ds.H:'',
+    date:new Date().toLocaleDateString(),fb:sub.feedback||'',
+  });
+  saveLocal(rows);
+}
+function getCsvUrl(){
+  try{
+    // Use saved URL, or fall back to the hardcoded sheet URL
+    return localStorage.getItem('dgep_csv')||window.CSV_URL||'';
+  }catch(e){return window.CSV_URL||'';}
+}
+function storeCsvUrl(u){try{localStorage.setItem('dgep_csv',u);}catch(e){}}
+function postToSheets(sub){
+  if(!CONFIGURED)return;
+  try{fetch(window.API,{method:'POST',body:JSON.stringify(sub),mode:'no-cors'});}catch(e){}
+}
+
+// ── CSV PARSE ────────────────────────────────────────────────────────────────
+function parseCSV(txt){
+  const rows=[];let cur=[],field='',inQ=false;
+  const NL='\n',CR='\r',COMMA=',',QUOTE='"';
+  for(let i=0;i<txt.length;i++){
+    const c=txt[i];
+    if(inQ){
+      if(c===QUOTE&&txt[i+1]===QUOTE){field+=QUOTE;i++;}
+      else if(c===QUOTE)inQ=false;
+      else field+=c;
+    }else if(c===QUOTE)inQ=true;
+    else if(c===COMMA){cur.push(field);field='';}
+    else if(c===NL||c===CR){
+      cur.push(field);field='';
+      if(cur.some(f=>f!==''))rows.push(cur);
+      cur=[];
+      if(c===CR&&txt[i+1]===NL)i++;
+    }else field+=c;
+  }
+  cur.push(field);
+  if(cur.some(f=>f!==''))rows.push(cur);
+  return rows;
+}
+function csvToSubs(txt){
+  const rows=parseCSV(txt);if(rows.length<2)return[];
+  const hdrs=rows[0];
+  return rows.slice(1).map(row=>{
+    const o={};hdrs.forEach((h,i)=>o[h]=(row[i]||''));
+    return{name:o['Business Name']||'',type:o['Business Type']||'',locs:o['Locations']||'',
+      reg:o['Registration']||'',score:parseFloat(o['Green Score'])||0,band:o['Performance Band']||'',
+      A:o['Dim A: Energy'],B:o['Dim B: Water'],C:o['Dim C: Waste'],D:o['Dim D: Emissions'],
+      E:o['Dim E: Procurement'],F:o['Dim F: Compliance'],
+      G:o['Dim G: Chemicals (suppl.)'],H:o['Dim H: Customer (suppl.)'],
+      date:o['Date']||'',fb:o['Open Feedback']||''};
+  });
+}
+
+// ── SCORING ──────────────────────────────────────────────────────────────────
+function computeScores(ans,isCul){
+  const dims={};
+  Object.keys(Q).forEach(id=>{
+    const q=Q[id],a=ans[id];
+    if(q.cul&&!isCul)return;
+    if(a===undefined||a===null)return;
+    let sc=null;
+    if(q.t==='s'){const o=q.opts.find(([l])=>l===a);if(o&&o[1]!==null)sc=o[1];}
+    else{const sel=Array.isArray(a)?a:[];const ss=sel.map(s=>{const o=q.opts.find(([l])=>l===s);return(o&&o[1]!==null)?o[1]:null;}).filter(v=>v!==null);if(ss.length)sc=ss.reduce((a,b)=>a+b,0)/ss.length;}
+    if(sc===null)return;
+    if(!dims[q.d])dims[q.d]=[];dims[q.d].push(sc);
+  });
+  const dav={};Object.keys(dims).forEach(d=>{dav[d]=Math.round(dims[d].reduce((a,b)=>a+b,0)/dims[d].length*100)/100;});
+  let ws=0,wu=0;
+  ['A','B','C','D','E','F'].forEach(d=>{if(dav[d]!=null){ws+=dav[d]*W[d];wu+=W[d];}});
+  const gs=wu>0?Math.round((ws/wu)*100)/10:0;
+  return{dimScores:dav,greenScore:gs,band:getBand(gs)};
+}
+
+// ── GAUGE ────────────────────────────────────────────────────────────────────
+function Gauge({score,color}){
+  const R=66,cx=88,cy=82,pct=Math.min(Math.max(score/100,0),1);
+  const ang=Math.PI*(1-pct);
+  const x1=cx-R,y1=cy,x2=cx+R*Math.cos(ang),y2=cy-R*Math.sin(ang),lg=pct>0.5?1:0;
+  return e('svg',{width:176,height:98,viewBox:'0 0 176 98'},
+    e('path',{d:`M${x1} ${y1} A${R} ${R} 0 0 1 ${cx+R} ${cy}`,fill:'none',stroke:'rgba(255,255,255,0.08)',strokeWidth:15}),
+    pct>0&&e('path',{d:`M${x1} ${y1} A${R} ${R} 0 ${lg} 1 ${x2} ${y2}`,fill:'none',stroke:color,strokeWidth:15,strokeLinecap:'round'}),
+    e('text',{x:cx,y:cy-9,textAnchor:'middle',fontSize:26,fontWeight:600,fill:color},score.toFixed(1)),
+    e('text',{x:cx,y:cy+11,textAnchor:'middle',fontSize:11,fill:'rgba(255,255,255,0.35)'},'/100')
+  );
+}
+
+// ── MINI CHART ───────────────────────────────────────────────────────────────
+function MiniChart({data}){
+  if(!data||!data.length)return null;
+  const max=Math.max(...data.map(d=>parseFloat(d.score)||0),1);
+  return e('div',{className:'bars'},
+    data.map((d,i)=>{
+      const ht=Math.max(4,((parseFloat(d.score)||0)/max)*64);
+      const b=getBand(parseFloat(d.score)||0);
+      return e('div',{key:i,className:'bw'},
+        e('div',{className:'bbar',title:`${d.name}: ${d.score}`,style:{height:ht,background:b.c}}),
+        e('div',{className:'blbl'},d.name.slice(0,5))
+      );
+    })
+  );
+}
+
+// ── QUESTION BLOCK ───────────────────────────────────────────────────────────
+function QBlock({qid,ans,onChange,isCul}){
+  const q=Q[qid];
+  if(q.cul&&!isCul)return null;
+  const isM=q.t==='m';
+  const sel=isM?(Array.isArray(ans)?ans:[]):(ans||null);
+  function tog(label,score){
+    if(isM){
+      const none=score===0&&(label.indexOf('None')>=0||label.indexOf('Not applicable')>=0);
+      if(none){onChange(qid,sel.indexOf(label)>=0?[]:[label]);return;}
+      const cur=sel.filter(s=>{const o=q.opts.find(([l])=>l===s);return!(o&&o[1]===0&&(s.indexOf('None')>=0||s.indexOf('Not applicable')>=0));});
+      onChange(qid,cur.indexOf(label)>=0?cur.filter(l=>l!==label):[...cur,label]);
+    }else{onChange(qid,sel===label?null:label);}
+  }
+  return e('div',{className:`qb${q.cul?' cul':''}`},
+    q.cul&&e('div',{className:'ctag'},'Culinary firms only'),
+    e('div',{className:'ql'},q.lbl),
+    e('div',{className:'opts'},q.opts.map(([label,score])=>{
+      const act=isM?sel.indexOf(label)>=0:sel===label;
+      return e('div',{key:label,className:`opt${act?' s':''}`,onClick:()=>tog(label,score)},
+        e('div',{className:isM?'ck':'rd'},act&&e('span',{className:isM?'ci':'ri'},isM?'v':'')),
+        e('span',null,label)
+      );
+    }))
+  );
+}
+
+// ── APP ──────────────────────────────────────────────────────────────────────
+function App(){
+  const [view,setView]=useState('home');
+  const [step,setStep]=useState(0);
+  const [profile,setProfile]=useState({name:'',type:'',locs:'',reg:'',pol:''});
+  const [answers,setAnswers]=useState({});
+  const [feedback,setFeedback]=useState('');
+  const [result,setResult]=useState(null);
+  const [subs,setSubs]=useState([]);
+  const [submitting,setSubmitting]=useState(false);
+  const [saveMsg,setSaveMsg]=useState('');
+  const [toast,setToast]=useState(null);
+  // Password modal state
+  const [showPw,setShowPw]=useState(false);
+  const [pwIn,setPwIn]=useState('');
+  const [pwErr,setPwErr]=useState(false);
+  // CSV sync state
+  const [csvUrl,setCsvUrl]=useState(getCsvUrl);
+  const [csvIn,setCsvIn]=useState(getCsvUrl);
+  const [csvLoading,setCsvLoading]=useState(false);
+  const [showCsvModal,setShowCsvModal]=useState(false);
+  const [syncStatus,setSyncStatus]=useState('');
+
+  const isCul=/(culinary|restaurant|food|cafe)/i.test(profile.type||'');
+
+  // Scroll form to top after section change
+  useEffect(()=>{
+    const t=setTimeout(()=>{const fm=document.querySelector('.fm');if(fm)fm.scrollTop=0;},30);
+    return()=>clearTimeout(t);
+  },[step]);
+
+  function showToast(msg,isErr){
+    setToast({msg,err:!!isErr});
+    setTimeout(()=>setToast(null),3000);
+  }
+  function setAns(id,val){setAnswers(p=>({...p,[id]:val}));}
+  function setPro(k,v){setProfile(p=>({...p,[k]:v}));}
+
+  function secDone(sec){
+    if(sec.id==='profile')return!!(profile.name&&profile.type);
+    return sec.qs.some(qid=>{const q=Q[qid];if(q.cul&&!isCul)return false;const a=answers[qid];return Array.isArray(a)?a.length>0:!!a;});
+  }
+
+  // ── DASHBOARD AUTH ─────────────────────────────────────────────────────────
+  function askDash(){setShowPw(true);setPwIn('');setPwErr(false);}
+
+  function confirmDash(){
+    if(pwIn!==window.PWD){setPwErr(true);return;}
+    setShowPw(false);setPwIn('');setPwErr(false);
+    const rows=loadLocal();
+    setSubs(rows);
+    setView('dashboard');
+    // Auto-sync if CSV URL already saved
+    const saved=getCsvUrl();
+    if(saved){
+      setSyncStatus('Syncing...');
+      doSync(saved,rows);
+    }
+  }
+
+  // ── SHEETS SYNC ────────────────────────────────────────────────────────────
+  function tryFetchCsv(urls,idx,onOk,onFail){
+    if(idx>=urls.length){onFail('All URL formats failed — check sheet sharing settings');return;}
+    fetch(urls[idx])
+      .then(r=>{
+        if(!r.ok)throw new Error('HTTP '+r.status);
+        return r.text();
+      })
+      .then(txt=>{
+        // Detect Google HTML error pages (login redirect / permission denied)
+        if(txt.trim().startsWith('<')){throw new Error('Got HTML — sheet not publicly viewable');}
+        const rows=csvToSubs(txt);
+        if(rows.length>0){onOk(rows,urls[idx]);return;}
+        // CSV parsed but 0 data rows — could be empty sheet or wrong tab
+        const raw=parseCSV(txt);
+        if(raw.length>=1){onOk([],urls[idx]);return;} // valid but empty
+        throw new Error('Unrecognised response');
+      })
+      .catch(err=>{
+        console.warn('CSV attempt '+(idx+1)+' failed:',err.message);
+        tryFetchCsv(urls,idx+1,onOk,onFail);
+      });
+  }
+
+  function doSync(url,localRows){
+    const target=url||csvUrl;
+    if(!target){setShowCsvModal(true);return;}
+    setCsvLoading(true);setSyncStatus('Syncing from Sheets...');
+    // Build candidate URLs: user/saved URL first, then known formats for this sheet
+    const candidates=[target];
+    if(window.SHEET_ID){
+      const id=window.SHEET_ID;
+      const c1='https://docs.google.com/spreadsheets/d/'+id+'/gviz/tq?tqx=out:csv&sheet=DGEP%20Submissions';
+      const c2='https://docs.google.com/spreadsheets/d/'+id+'/gviz/tq?tqx=out:csv';
+      const c3='https://docs.google.com/spreadsheets/d/'+id+'/export?format=csv';
+      [c1,c2,c3].forEach(u=>{if(candidates.indexOf(u)<0)candidates.push(u);});
+    }
+    tryFetchCsv(candidates,0,
+      function(sheetRows,workingUrl){
+        if(sheetRows.length===0){
+          setSyncStatus('Connected to Sheet — no submissions in it yet');
+          setCsvLoading(false);setShowCsvModal(false);
+          storeCsvUrl(workingUrl);setCsvUrl(workingUrl);setCsvIn(workingUrl);
+          return;
+        }
+        const keys=new Set(sheetRows.map(r=>r.name+'|'+r.date));
+        (localRows||loadLocal()).forEach(r=>{if(!keys.has(r.name+'|'+r.date))sheetRows.push(r);});
+        saveLocal(sheetRows);setSubs(sheetRows);
+        storeCsvUrl(workingUrl);setCsvUrl(workingUrl);setCsvIn(workingUrl);
+        setSyncStatus('Synced — '+sheetRows.length+' records from Google Sheets');
+        setCsvLoading(false);setShowCsvModal(false);
+      },
+      function(errMsg){
+        setSyncStatus('Sync failed: '+errMsg+'. Ensure sheet sharing is "Anyone with the link — Viewer".');
+        setCsvLoading(false);
+      }
+    );
+  }
+
+  function openCsvModal(){setShowCsvModal(true);setCsvIn(csvUrl);}
+
+  // ── FINISH (submit assessment) ─────────────────────────────────────────────
+  function finish(){
+    setSubmitting(true);
+    const r=computeScores(answers,isCul);
+    setResult(r);
+    const sub={id:Date.now(),date:new Date().toISOString(),
+      profile:{...profile},
+      result:{dimScores:r.dimScores,greenScore:r.greenScore,band:{l:r.band.l,c:r.band.c,b:r.band.b}},
+      answers:{...answers},feedback};
+    appendLocal(sub);
+    postToSheets(sub);
+    setView('results');
+    setSaveMsg('Assessment saved');
+    showToast('Assessment saved successfully');
+    setSubmitting(false);
+  }
+
+  function reset(){setStep(0);setProfile({name:'',type:'',locs:'',reg:'',pol:''});setAnswers({});setFeedback('');setResult(null);setSaveMsg('');}
+
+  // ── PASSWORD MODAL (shared across views) ───────────────────────────────────
+  const pwModal=showPw&&e('div',{className:'ov',onClick:ev=>{if(ev.target.className==='ov'){setShowPw(false);}}},
+    e('div',{className:'modal'},
+      e('div',{className:'m-ico'},'🔒'),
+      e('h3',null,'Admin Dashboard'),
+      e('p',null,'Restricted to the DGEP research team. Enter the access password to view all submitted scores and analytics.'),
+      e('input',{className:'inp',type:'password',value:pwIn,placeholder:'Enter password',autoFocus:true,
+        style:{marginBottom:'6px',letterSpacing:'2px'},
+        onChange:ev=>{setPwIn(ev.target.value);setPwErr(false);},
+        onKeyDown:ev=>{if(ev.key==='Enter')confirmDash();}}),
+      pwErr&&e('div',{className:'m-err'},'⚠ Incorrect password. Please try again.'),
+      e('div',{className:'m-row'},
+        e('button',{className:'btn bgrn',style:{flex:1},onClick:confirmDash},'Access Dashboard'),
+        e('button',{className:'btn bg',onClick:()=>{setShowPw(false);}},'Cancel')
+      )
+    )
+  );
+
+  // ── CSV MODAL ──────────────────────────────────────────────────────────────
+  const csvModal=showCsvModal&&e('div',{className:'ov',onClick:ev=>{if(ev.target.className==='ov')setShowCsvModal(false);}},
+    e('div',{className:'modal'},
+      e('div',{className:'m-ico'},'📊'),
+      e('h3',null,'Connect Google Sheets'),
+      e('p',null,'Paste the published CSV URL of your Sheet to load submissions from all devices. One-time setup — the URL is saved automatically.'),
+      e('div',{className:'csv-hint'},'In Google Sheets: File → Share → Publish to web → select "DGEP Submissions" tab → CSV → Publish → copy URL'),
+      e('input',{className:'inp',value:csvIn,placeholder:'https://docs.google.com/spreadsheets/d/e/.../pub?output=csv',
+        style:{marginTop:'10px',marginBottom:'6px',fontSize:11},
+        onChange:ev=>setCsvIn(ev.target.value),
+        onKeyDown:ev=>{if(ev.key==='Enter')doSync(csvIn);}}),
+      e('div',{className:'m-row'},
+        e('button',{className:'btn bgrn',style:{flex:1},onClick:()=>doSync(csvIn)},csvLoading?'Loading...':'Load & Save URL'),
+        e('button',{className:'btn bg',onClick:()=>setShowCsvModal(false)},'Cancel')
+      )
+    )
+  );
+
+  const toastEl=toast&&e('div',{className:`toast${toast.err?' err':''}`},toast.msg);
+
+  // ── HOME ───────────────────────────────────────────────────────────────────
+  if(view==='home')return e('div',{className:'app'},
+    e('div',{className:'bar'},
+      e('div',{className:'brand'},e('div',{className:'bico'},'🌿'),e('div',null,e('div',{className:'bsub'},'NUST Business School · BRP 2026'),e('div',{className:'btitle'},'Digital Green Evaluation Platform'))),
+      e('div',{className:'nav'},e('button',{className:'nb a'},'Home'))
+    ),
+    toastEl,pwModal,
+    e('div',{className:'home'},
+      e('div',{className:'hlogo'},'🌿'),
+      e('h2',null,'Environmental Scoring — Retail & Culinary Sector'),
+      e('p',null,'Assess your business across six primary dimensions and receive a validated Green Score (0-100) powered by AHP-weighted framework analysis.'),
+      e('div',{className:'hcards'},
+        e('div',{className:'hcard',onClick:()=>{reset();setView('form');}},e('div',{className:'hcico'},'📋'),e('h3',null,'Start Assessment'),e('p',null,'Full v4.0 evaluation — 8 dimensions, 30+ questions')),
+        e('div',{className:'hcard',onClick:askDash},e('div',{className:'hcico'},'📊'),e('h3',null,'Admin Dashboard'),e('p',null,'View all submitted scores — password protected'))
+      )
+    )
+  );
+
+  // ── DASHBOARD ─────────────────────────────────────────────────────────────
+  if(view==='dashboard'){
+    const gs=subs.map(s=>parseFloat(s.score)||0);
+    const mean=gs.length?(gs.reduce((a,b)=>a+b,0)/gs.length).toFixed(1):'—';
+    const bc={};BANDS.forEach(b=>{bc[b.l]=0;});
+    subs.forEach(s=>{if(s.band)bc[s.band]=(bc[s.band]||0)+1;});
+    return e('div',{className:'app'},
+      e('div',{className:'bar'},
+        e('div',{className:'brand'},e('div',{className:'bico'},'🌿'),e('div',null,e('div',{className:'bsub'},'NUST BRP 2026'),e('div',{className:'btitle'},'Digital Green Evaluation Platform'))),
+        e('div',{className:'nav'},
+          e('button',{className:'nb',onClick:()=>setView('home')},'Home'),
+          e('button',{className:'nb a'},'Dashboard'),
+          e('button',{className:'nb',onClick:()=>{reset();setView('form');}},'+ New Assessment'),
+          e('button',{className:`nb grn${csvLoading?' disabled':''}`,onClick:()=>doSync(csvUrl)},csvLoading?'Syncing...':'↻ Sync from Sheets'),
+          e('button',{className:'nb',onClick:openCsvModal},'⚙ Sheet URL')
+        )
+      ),
+      toastEl,pwModal,csvModal,
+      e('div',{className:'dash'},
+        syncStatus&&e('div',{className:'sync-note'},syncStatus),
+        subs.length===0
+          ?e('div',{className:'empty'},
+              e('p',null,'No submissions yet'),
+              e('span',null,'Click "Refresh" to load from Google Sheets, or submit the first assessment.'),
+              e('div',{style:{marginTop:14,display:'flex',gap:8,justifyContent:'center'}},
+                e('button',{className:'btn bp',onClick:()=>{reset();setView('form');}},'Start First Assessment'),
+                e('button',{className:'btn bg',onClick:openCsvModal},'Connect Google Sheets')
+              )
+            )
+          :e('div',null,
+              e('div',{className:'srow'},
+                e('div',{className:'sc'},e('div',{className:'sl'},'Firms Assessed'),e('div',{className:'sv'},subs.length)),
+                e('div',{className:'sc'},e('div',{className:'sl'},'Mean Green Score'),e('div',{className:'sv',style:{color:'#2E86C1'}},mean)),
+                e('div',{className:'sc'},e('div',{className:'sl'},'Highest'),e('div',{className:'sv',style:{color:'#1E8449'}},gs.length?Math.max(...gs).toFixed(1):'—')),
+                e('div',{className:'sc'},e('div',{className:'sl'},'Lowest'),e('div',{className:'sv',style:{color:'#E74C3C'}},gs.length?Math.min(...gs).toFixed(1):'—'))
+              ),
+              e('div',{className:'srow'},BANDS.map(b=>e('div',{key:b.l,className:'sc',style:{borderTop:`3px solid ${b.c}`}},e('div',{className:'sl'},b.l),e('div',{className:'sv',style:{color:b.c}},bc[b.l]||0)))),
+              e('div',{className:'cs'},e('div',{className:'ct'},'Green Scores by Firm'),e(MiniChart,{data:subs.map((s,i)=>({name:s.name||`F${i+1}`,score:s.score}))})),
+              e('div',{className:'cs'},
+                e('div',{className:'ct'},
+                  e('span',null,'All Submissions'),
+                  e('span',{style:{fontSize:10,color:'rgba(255,255,255,0.3)',fontWeight:400}},`${subs.length} record${subs.length!==1?'s':''}`)
+                ),
+                e('table',{className:'tbl'},
+                  e('thead',null,e('tr',null,['Business','Type','Locs','Score','Band','A','B','C','D','E','F','Date'].map(k=>e('th',{key:k},k)))),
+                  e('tbody',null,[...subs].reverse().map((s,i)=>{
+                    const b=getBand(parseFloat(s.score)||0);
+                    return e('tr',{key:i},
+                      e('td',null,s.name||'—'),e('td',null,s.type||'—'),e('td',null,s.locs||'—'),
+                      e('td',{style:{fontWeight:600,color:b.c}},(parseFloat(s.score)||0).toFixed(1)),
+                      e('td',null,e('span',{className:'bdot',style:{background:b.c}}),s.band||b.l),
+                      ...['A','B','C','D','E','F'].map(d=>e('td',{key:d,style:{color:(DM[d]||{}).c,fontSize:10.5}},s[d]!=null&&s[d]!==''?parseFloat(s[d]).toFixed(1):'—')),
+                      e('td',{style:{color:'rgba(255,255,255,0.3)',fontSize:10}},s.date||'—')
+                    );
+                  }))
+                )
+              )
+            )
+      )
+    );
+  }
+
+  // ── RESULTS ───────────────────────────────────────────────────────────────
+  if(view==='results'&&result){
+    const band=result.band||BANDS[3],ds=result.dimScores||{};
+    return e('div',{className:'app'},
+      e('div',{className:'bar'},
+        e('div',{className:'brand'},e('div',{className:'bico'},'🌿'),e('div',null,e('div',{className:'bsub'},'NUST BRP 2026'),e('div',{className:'btitle'},'Digital Green Evaluation Platform'))),
+        e('div',{className:'nav'},e('button',{className:'nb',onClick:()=>setView('home')},'Home'),e('button',{className:'nb',onClick:askDash},'Dashboard'))
+      ),
+      toastEl,pwModal,
+      e('div',{className:'res'},
+        e('div',{className:'sco'},
+          e(Gauge,{score:result.greenScore,color:band.c}),
+          e('div',null,
+            e('div',{style:{fontSize:17,fontWeight:500,marginBottom:4}},profile.name||'Assessment Complete'),
+            e('div',{style:{fontSize:12,color:'rgba(255,255,255,0.45)'}},[profile.type,profile.locs,profile.reg].filter(Boolean).join(' · ')),
+            e('div',{className:'bpill',style:{background:band.b,color:band.c}},band.l),
+            e('div',{style:{fontSize:11.5,color:'rgba(255,255,255,0.45)',marginTop:9,lineHeight:1.6}},INTERP[band.l]),
+            saveMsg&&e('div',{className:'smsg'},saveMsg)
+          )
+        ),
+        e('div',{className:'dgrid'},
+          ['A','B','C','D','E','F'].map(d=>{const sc=ds[d],m=DM[d];
+            return e('div',{key:d,className:'dcard'},
+              e('div',{className:'dlbl'},e('span',{className:'ddot',style:{background:m.c}}),m.n,e('span',{style:{marginLeft:'auto',fontSize:9,color:'rgba(255,255,255,0.3)'}},(W[d]*100).toFixed(1)+'%')),
+              e('div',{className:'dval',style:{color:m.c}},sc!=null?sc.toFixed(2):'—',e('span',{style:{fontSize:10,color:'rgba(255,255,255,0.35)',fontWeight:400}},' /10')),
+              e('div',{className:'dbg'},e('div',{className:'dbf',style:{width:`${sc!=null?sc*10:0}%`,background:m.c}}))
+            );
+          })
+        ),
+        (ds.G!=null||ds.H!=null)&&e('div',{style:{marginBottom:16}},
+          e('div',{style:{fontSize:11,fontWeight:500,color:'rgba(255,255,255,0.35)',marginBottom:7}},'Supplementary (unweighted)'),
+          ['G','H'].map(d=>{const sc=ds[d];if(sc==null)return null;const m=DM[d];
+            return e('div',{key:d,className:'sr'},
+              e('span',{style:{minWidth:130,fontSize:11,color:'rgba(255,255,255,0.45)'}},m.n),
+              e('div',{className:'sbg2'},e('div',{className:'dbf',style:{width:`${sc*10}%`,background:m.c}})),
+              e('span',{style:{minWidth:30,textAlign:'right',fontSize:11,fontWeight:500}},sc.toFixed(1))
+            );
+          })
+        ),
+        e('div',{style:{display:'flex',gap:9,marginTop:6}},
+          e('button',{className:'btn bp',onClick:()=>{reset();setView('form');}},'New Assessment'),
+          e('button',{className:'btn bgrn',onClick:askDash},'View Dashboard')
+        )
+      )
+    );
+  }
+
+  // ── FORM ─────────────────────────────────────────────────────────────────
+  const sec=SECS[step],pct=Math.round(step/SECS.length*100);
+  return e('div',{className:'app'},
+    e('div',{className:'bar'},
+      e('div',{className:'brand'},e('div',{className:'bico'},'🌿'),e('div',null,e('div',{className:'bsub'},'NUST BRP 2026'),e('div',{className:'btitle'},'Digital Green Evaluation Platform'))),
+      e('div',{className:'nav'},e('button',{className:'nb',onClick:()=>setView('home')},'Home'),e('button',{className:'nb',onClick:askDash},'Dashboard'))
+    ),
+    toastEl,pwModal,
+    e('div',{className:'fw',style:{flex:1,minHeight:400}},
+      e('div',{className:'sb'},
+        SECS.map((s,i)=>e('div',{key:s.id,className:`si${i===step?' a':''}`,onClick:()=>setStep(i)},
+          e('div',{className:`dot${i===step?' cr':secDone(s)?' dn':''}`}),e('span',null,`${s.ico} ${s.lbl}`)
+        ))
+      ),
+      e('div',{className:'fm'},
+        sec.id==='profile'&&e('div',null,
+          e('div',{className:'sh'},e('div',{className:'sbadge'},'🏢 Firm Profile'),e('h2',null,'About Your Business'),e('p',null,'Classification — not included in Green Score.')),
+          PROFS.map(f=>e('div',{key:f.k,className:'qb'},
+            e('div',{className:'ql'},f.lbl),
+            f.t==='text'
+              ?e('input',{className:'inp',value:profile[f.k]||'',placeholder:f.ph||f.lbl,onChange:ev=>setPro(f.k,ev.target.value)})
+              :e('select',{className:'inp',value:profile[f.k]||'',onChange:ev=>setPro(f.k,ev.target.value)},f.opts.map(o=>e('option',{key:o,value:o},o||'— Select —')))
+          ))
+        ),
+        sec.qs&&sec.qs.length>0&&sec.id!=='H'&&e('div',null,
+          e('div',{className:'sh'},
+            e('div',{className:'sbadge',style:{borderLeft:`3px solid ${(DM[sec.id]||{}).c||'#566573'}`}},
+              `${sec.ico} ${sec.lbl}`,
+              DM[sec.id]&&W[sec.id]&&e('span',{style:{marginLeft:8,fontSize:9,color:'rgba(255,255,255,0.35)'}},`AHP: ${(W[sec.id]*100).toFixed(1)}%`),
+              DM[sec.id]&&!W[sec.id]&&e('span',{style:{marginLeft:8,fontSize:9,color:'rgba(255,255,255,0.35)'}},'Supplementary')
+            ),
+            e('h2',null,`Section ${sec.id}: ${DM[sec.id].n}`)
+          ),
+          sec.qs.map(qid=>e(QBlock,{key:qid,qid,ans:answers[qid],onChange:setAns,isCul}))
+        ),
+        sec.id==='H'&&e('div',null,
+          e('div',{className:'sh'},
+            e('div',{className:'sbadge',style:{borderLeft:`3px solid ${DM.H.c}`}},'👥 Customer Engagement',e('span',{style:{marginLeft:8,fontSize:9,color:'rgba(255,255,255,0.35)'}},'Supplementary')),
+            e('h2',null,'Section H: Customer Engagement')
+          ),
+          sec.qs.map(qid=>e(QBlock,{key:qid,qid,ans:answers[qid],onChange:setAns,isCul})),
+          e('div',{className:'qb',style:{marginTop:8}},
+            e('div',{className:'ql'},'Open Feedback (optional)'),
+            e('p',{style:{fontSize:11,color:'rgba(255,255,255,0.4)',marginBottom:8}},'Any practices not captured above, or questions that were unclear?'),
+            e('textarea',{className:'inp ta',value:feedback,placeholder:'Share any additional comments...',onChange:ev=>setFeedback(ev.target.value)})
+          )
+        )
+      )
+    ),
+    e('div',{className:'ff'},
+      e('button',{className:'btn bg',onClick:()=>step>0&&setStep(s=>s-1),disabled:step===0},'← Previous'),
+      e('div',{className:'pb'},e('div',{className:'pf',style:{width:`${pct}%`}})),
+      e('span',{style:{fontSize:10,color:'rgba(255,255,255,0.3)',whiteSpace:'nowrap'}},`${step+1} / ${SECS.length}`),
+      step<LAST
+        ?e('button',{className:'btn bp',onClick:()=>setStep(s=>s+1)},'Next →')
+        :e('button',{className:`btn bgrn${submitting?' disabled':''}`,onClick:submitting?null:finish,disabled:submitting},
+            submitting?'Saving...':'Compute Green Score ✓')
+    )
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(e(App));
+
+</script>
+</body>
+</html>
